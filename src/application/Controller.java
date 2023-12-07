@@ -64,6 +64,20 @@ public class Controller {
 	}
 
 	/**
+	 * Sets the Policy Manager for the Controller and propagates it to registered invokers.
+	 * 
+	 * @param policyManager The Policy Manager to be set for the Controller and invokers.
+	 * @throws OperationNotValid If the Policy Manager is null.
+	 */
+	public void	setPolicyManager(PolicyManager policyManager) throws OperationNotValid
+	{
+		if (policyManager == null) throw new OperationNotValid("Policy Manager cannot be null");
+		this.policyManager = policyManager;
+		for (InvokerInterface invoker : invokers)
+			invoker.setPolicyManager(policyManager);
+	}
+
+	/**
 	 * Adds an invoker to the Controllers list of registered invokers.
 	 * 
 	 * @param invoker The invoker to be registered.
@@ -102,17 +116,6 @@ public class Controller {
 		return (invokers);
 	}
 	
-	/**
-	 * Checks if the id of an action that we are trying to register is already registered.
-	 * 
-	 * @param id The id of the action we are trying to register.
-	 * @return False if the map is empty or the id doesn't exists in it. True if it does.
-	 */
-	private boolean	isAlreadyRegistered(String id)
-	{
-		if (invokables.isEmpty()) return (false);
-		return (invokables.get(id) != null);
-	}
 
 	/** //TODO: Redo this one
 	 * Tries to register an action.
@@ -149,12 +152,25 @@ public class Controller {
 	 * The id of the object we are tring to delete is null.
 	 * The id of the object we are tring to delete doesn't exists in the map.
 	 */
-	public void removeAction(String id) throws OperationNotValid
+	public void deleteAction(String id) throws OperationNotValid
 	{
 		if (id == null)	throw new OperationNotValid("Id cannot be null.");
 		if (!isAlreadyRegistered(id)) throw new OperationNotValid("There are no actions with the id" + id);
 		invokables.remove(id);
 	}
+
+	/**
+	 * Checks if the id of an action that we are trying to register is already registered.
+	 * 
+	 * @param id The id of the action we are trying to register.
+	 * @return False if the map is empty or the id doesn't exists in it. True if it does.
+	 */
+	private boolean	isAlreadyRegistered(String id)
+	{
+		if (invokables.isEmpty()) return (false);
+		return (invokables.get(id) != null);
+	}
+	
 
 	/**
 	 * Gets the action stored with the ID passed as a parameter.
@@ -167,36 +183,6 @@ public class Controller {
 		if (id == null) return (null);
 		return (invokables.get(id).getInvokable());
 	}
-
-	/**
-	 * Sets the Policy Manager for the Controller and propagates it to registered invokers.
-	 * 
-	 * @param policyManager The Policy Manager to be set for the Controller and invokers.
-	 * @throws OperationNotValid If the Policy Manager is null.
-	 */
-	public void	setPolicyManager(PolicyManager policyManager) throws OperationNotValid
-	{
-		if (policyManager == null) throw new OperationNotValid("Policy Manager cannot be null");
-		this.policyManager = policyManager;
-		for (InvokerInterface invoker : invokers)
-			invoker.setPolicyManager(policyManager);
-	}
-
-	/**
-	 * Method used to select an invoker to execute an action based on the ram it consumes and the assigned policy.
-	 * @param ram
-	 * @return
-	 * @throws Exception The exception can be caused because:
-	 * NoPolicyManagerRegistered: There is no Policy Manager registered.
-	 * NoInvokerAvailable: There is no invoker with enough max ram to execute the action. //TODO: can it throw this?
-	 * Other: Something went with RMI. //TODO: to be defined
-	 */
-	private InvokerInterface selectInvoker(long ram) throws Exception
-	{
-		if (policyManager == null) throw new NoPolicyManagerRegistered("There isn't a policy manager registered.");
-		return (policyManager.getInvoker(invokers, ram));
-	}
-
 	/**
 	 * Method used by actions to get the invokable.
 	 * 
@@ -238,6 +224,21 @@ public class Controller {
 
 		invoker = selectInvoker(invokable.getRam());
 		return (invoker.invokeAsync(invokable, args, id));
+	}
+
+	/**
+	 * Method used to select an invoker to execute an action based on the ram it consumes and the assigned policy.
+	 * @param ram
+	 * @return
+	 * @throws Exception The exception can be caused because:
+	 * NoPolicyManagerRegistered: There is no Policy Manager registered.
+	 * NoInvokerAvailable: There is no invoker with enough max ram to execute the action. //TODO: can it throw this?
+	 * Other: Something went with RMI. //TODO: to be defined
+	 */
+	private InvokerInterface selectInvoker(long ram) throws Exception
+	{
+		if (policyManager == null) throw new NoPolicyManagerRegistered("There isn't a policy manager registered.");
+		return (policyManager.getInvoker(invokers, ram));
 	}
 
 	/**
@@ -330,7 +331,8 @@ public class Controller {
 	 *  There is no action found with the ID passed as a parameter.
 	 * 	There is no invoker with enough max ram to run execute the action.
 	 * 	Something goes wrong when executing the invokable.
-	 */	public <T, R> List<Future<R>> invoke_async(String id, List<T> args) throws Exception
+	 */	
+	public <T, R> List<Future<R>> invoke_async(String id, List<T> args) throws Exception
 	{
 		Invokable		invokable;
 		List<Future<R>>	result;
