@@ -1,4 +1,5 @@
 package application;
+import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -6,50 +7,51 @@ import java.util.Map;
 import java.util.concurrent.Future;
 
 import dynamic_proxy.DynamicProxy;
+import invoker.InvokerInterface;
+import policy_manager.PolicyManager;
 import faas_exceptions.NoActionRegistered;
 import faas_exceptions.NoPolicyManagerRegistered;
 import faas_exceptions.OperationNotValid;
-import invoker.InvokerInterface;
-import policy_manager.PolicyManager;
 
 public class Controller {
-	public MetricSet			metrics;
 
 	/**
-	 * List of invokables our controller has.	//TODO: extend this explanation
-	 */
-	private Map<String, Invokable>	invokables;
-
-	/**
-	 * List of invokers used for executing functions. This will be implementations of the interface InvokerInterface.
-	 * <p>The implementations of InvokerInterface can be:</p>
-	 * <ul>
-	 * 	<li>An Invoker that executes functions.</li>
-	 *	<li>An Invoker that executes functions and has invokers inside of him that executes functions.</li>
-	 *	<li>A ServerInvoker that executes functions remotly.</li>
-	 * </ul>
+	 * List of invokers used for executing functions. This will be implementations of the interface InvokerInterface and can be either simple or composite.
+	 *  The implementations of InvokerInterface can be:
+	 * 	An Invoker that executes functions.
+	 *	An Invoker that executes functions and has invokers inside of him that executes functions.
+	 *	A ServerInvoker that executes functions remotly.
 	 */
 	private List<InvokerInterface>	invokers;
 
 	/**
-	 * Policy used to select an invoker from invokers to execute a function.
+	 * A map containing Invokable functions associated with an unique identifiers in the Controller.
+	 * An invokable function encapsulates a predefined functionality and is represented by an instance of the {@link Invokable} class.
+	 */
+	private Map<String, Invokable>	invokables;
+
+	//TODO: this was made private, what does this do? If needed implement getters/setters.
+	private MetricSet metrics;
+
+	/**
+	 * Determines what policy will be used to select an invoker.
 	 */
 	private PolicyManager	policyManager;
 
 	/**
-	 * The instance used to limit the instantiation of Controller class.
+	 * The instance used to limit the instantiation of Controller class, following the Singleton design pattern.
 	 */
-	private static Controller	unicInstance = null;
+	private static Controller	uniqueInstance = null;
 
 	/**
-	 * Checks if the instance is null, and creates one if it is.
+	 * Checks if the Controller is instanciated, creates one if it isn't.
 	 * 
-	 * @return The singleton instance of Controller. 
+	 * @return The Singleton instance of Controller. 
 	 */
 	public static Controller instantiate() {
-		if (unicInstance == null)
-			unicInstance = new Controller();
-		return (unicInstance);
+		if (uniqueInstance == null)
+			uniqueInstance = new Controller();
+		return (uniqueInstance);
 	}
 
 	/**
@@ -62,21 +64,23 @@ public class Controller {
 	}
 
 	/**
-	 * Adds the implementation of InvokerInterface to the list of registered invokers.
+	 * Adds an invoker to the Controllers list of registered invokers.
 	 * 
-	 * @param invoker The InvokerInterface to be registered.
-	 * @throws OperationNotValid If the invoker passed as a parameter is null or is already inside the list.
+	 * @param invoker The invoker to be registered.
+	 * @throws OperationNotValid If the invoker received as a parameter is null or is already inside the list.
+	 * @throws NoPolicyManagerRegistered If no policy manager is registered with the controller.
 	 */
-	public void registerInvoker(InvokerInterface invoker) throws OperationNotValid
+	public void registerInvoker(InvokerInterface invoker) throws OperationNotValid, NoPolicyManagerRegistered
 	{
-		if (invoker == null) throw new OperationNotValid("Invoker to register cannot be null.");
+		if (policyManager == null) throw new NoPolicyManagerRegistered("There isn't a policy manager registered.");
+		if (invoker == null) throw new OperationNotValid("Invoker cannot be null.");
 		if (invokers.contains(invoker)) throw new OperationNotValid("Invoker is already registered.");
 		invokers.add(invoker);
 		invoker.setPolicyManager(policyManager);
 	}
 
 	/**
-	 * Removes the implementation of InvokerInterface from the list of registered invokers.
+	 * Removes an invoker from the list of registered invokers.
 	 * 
 	 * @param invoker The InvokerInterface to be removed.
 	 * @throws OperationNotValid If the invoker passed as a parameter is null or is not inside the list.
@@ -89,28 +93,28 @@ public class Controller {
 	}
 
 	/**
-	 * Getter of the list of type InvokerInterface named invokers.
-	 * //TODO: name this differently.
+	 * Retrieves the list of registered invokers within the controller.
+	 *
+	 * @return The list of registered invokers.
 	 */
-	public List<InvokerInterface>	getInvokerInterfaces()
+	public List<InvokerInterface> getRegisteredInvokers()
 	{
 		return (invokers);
 	}
 	
 	/**
-	 * Checks if the id of the object we are trying to register is already registered.
+	 * Checks if the id of an action that we are trying to register is already registered.
 	 * 
-	 * @param id The id of the object we are trying to register.
+	 * @param id The id of the action we are trying to register.
 	 * @return False if the map is empty or the id doesn't exists in it. True if it does.
 	 */
 	private boolean	isAlreadyRegistered(String id)
 	{
-		if (invokables.isEmpty())
-			return (false);
+		if (invokables.isEmpty()) return (false);
 		return (invokables.get(id) != null);
 	}
 
-	/**
+	/** //TODO: Redo this one
 	 * Tries to register an action.
 	 * 
 	 * <p>The action to register can be:</p>
@@ -131,9 +135,9 @@ public class Controller {
 	 */
 	public void registerAction(String id, Object invokable, long ram) throws OperationNotValid
 	{
-		if (invokable == null) throw new OperationNotValid("Invokable registered cannot be null.");
-		if (id == null)	throw new OperationNotValid("Id cannot be null.");
-		if (isAlreadyRegistered(id)) throw new OperationNotValid("Invokable already registered.");
+		if (invokable == null) throw new OperationNotValid("Action registered cannot be null.");
+		if (id == null)	throw new OperationNotValid("ID cannot be null.");
+		if (isAlreadyRegistered(id)) throw new OperationNotValid("Action already registered.");
 		invokables.put(id, new Invokable(id, invokable, ram));
 	}
 
@@ -141,11 +145,9 @@ public class Controller {
 	 * Tries to delete an action.
 	 * 
 	 * @param id The id of the object to be deleted.
-	 * @throws OperationNotValid <p>The exception can be caused because:</p>
-	 * <ul>
-	 * 	<li>The id of the object we are tring to delete is null.</li>
-	 * 	<li>The id of the object we are tring to delete doesn't exists in the map.</li>
-	 * </ul>
+	 * @throws OperationNotValid The exception can be caused because:
+	 * The id of the object we are tring to delete is null.
+	 * The id of the object we are tring to delete doesn't exists in the map.
 	 */
 	public void removeAction(String id) throws OperationNotValid
 	{
@@ -155,10 +157,10 @@ public class Controller {
 	}
 
 	/**
-	 * Gets the invokable stored with the id passed as a parameter.
+	 * Gets the action stored with the ID passed as a parameter.
 	 * 
-	 * @param id Id of the invokable to get.
-	 * @return The invokable or null if none was found.
+	 * @param id ID of the action to get.
+	 * @return The action or null if none was found.
 	 */
 	public Object getAction(String id)
 	{
@@ -166,7 +168,12 @@ public class Controller {
 		return (invokables.get(id).getInvokable());
 	}
 
-	//TODO: define javadoc
+	/**
+	 * Sets the Policy Manager for the Controller and propagates it to registered invokers.
+	 * 
+	 * @param policyManager The Policy Manager to be set for the Controller and invokers.
+	 * @throws OperationNotValid If the Policy Manager is null.
+	 */
 	public void	setPolicyManager(PolicyManager policyManager) throws OperationNotValid
 	{
 		if (policyManager == null) throw new OperationNotValid("Policy Manager cannot be null");
@@ -176,15 +183,13 @@ public class Controller {
 	}
 
 	/**
-	 * Method used to select a invoker to execute a function based on the ram it consumes and the policy we have assigned.
+	 * Method used to select an invoker to execute an action based on the ram it consumes and the assigned policy.
 	 * @param ram
 	 * @return
-	 * @throws Exception <p>The exception can be caused because:</p>
-	 * <ul>
-	 * 	<li>NoPolicyManagerRegistered: There is no policyManager registered.</li>
-	 * 	<li>NoInvokerAvailable: There is no invoker with enough max ram to execute the invokable.</li>
-	 *  <li>Exeption: something goes wrong with RMI.</li>
-	 * </ul>
+	 * @throws Exception The exception can be caused because:
+	 * NoPolicyManagerRegistered: There is no Policy Manager registered.
+	 * NoInvokerAvailable: There is no invoker with enough max ram to execute the action. //TODO: can it throw this?
+	 * Other: Something went with RMI. //TODO: to be defined
 	 */
 	private InvokerInterface selectInvoker(long ram) throws Exception
 	{
@@ -193,32 +198,31 @@ public class Controller {
 	}
 
 	/**
-	 * Method used by invokations to get the invokable.
+	 * Method used by actions to get the invokable.
 	 * 
-	 * @param id Identifier of the invokable.
+	 * @param id Identifier of the action.
 	 * @return The invokable or null if none was found.
 	 */
 	private Invokable getInvokable(String id)
 	{
-		if ( invokables.isEmpty() )
-			return (null);
+		if (invokables.isEmpty()) return (null);
 		return (invokables.get(id));
 	}
 
+	//TODO: Generic throws is ugly maybe fix later? Applies for most below.
+
 	/**
-	 * Method used by invokations to get an invoker to execute code and then execute it.
+	 * Method used by  actions to get an invoker to execute code and then execute it.
 	 * 
 	 * @param <T> Datatype of the parameters of the function to be invoked.
 	 * @param <R> Datatype of the return of the function to be invoked.
 	 * @param invokable Function to be invoked.
-	 * @param id Identifier of the invokable to be invoked.
-	 * @param args Parameters of the invokable.
-	 * @return Result of the invokation of the invokable.
-	 * @throws Exception <p>The exception can be caused because:</p>
-	 * <ul>
-	 * 	<li>There is no invoker with enough max ram to execute the invokable.</li>
-	 * 	<li>Something goes wrong when executing the invokable.</li>
-	 * </ul>
+	 * @param id Identifier of the action to be invoked.
+	 * @param args Parameters of the action.
+	 * @return Result of the invokation of the action.
+	 * @throws Exception The exception can be caused because:
+	 * There is no invoker with enough max ram to execute the invokable.
+	 * Something goes wrong when executing the invokable.
 	 */
 	private <T, R> R getResult(Invokable invokable, String id, T args) throws Exception
 	{
@@ -237,20 +241,18 @@ public class Controller {
 	}
 
 	/**
-	 * Searches a invokable with the id passed as a parameter and invokes it with args as a parameters.
+	 * Searches an action with the ID passed as a parameter and invokes it with args as a parameters.
 	 * 
 	 * @param <T> Datatype of the parameters of the function to be invoked.
 	 * @param <R> Datatype of the return of the function to be invoked.
 	 * @param id Identifier of the invokable to be invoked.
 	 * @param args Parameters of the invokable.
 	 * @return Result of the invokation of the invokable.
-	 * @throws Exception <p>The exception can be caused because:</p>
-	 * <ul>
-	 *  <li>The id passed as a parameter is null.</li>
-	 *  <li>There is no invokable found with the id passed as a parameter.</li>
-	 * 	<li>There is no invoker with enough max ram to run execute the invokable.</li>
-	 * 	<li>Something goes wrong when executing the invokable.</li>
-	 * </ul>
+	 * @throws Exception The exception can be caused because:
+	 *  The ID passed as a parameter is null.
+	 *  There is no action found with the ID passed as a parameter.
+	 * 	There is no invoker with enough max ram to run execute the action.
+	 * 	Something goes wrong when executing the invokable.
 	 */
 	public <T, R> R invoke(String id, T args) throws Exception
 	{
@@ -263,20 +265,18 @@ public class Controller {
 	}
 
 	/**
-	 * Searches a invokable with the id passed as a parameter and invokes it n times with each arg of list args as a parameters.
+	 * Searches an action with the ID passed as a parameter and invokes it for each argument of list args as a parameters.
 	 * 
 	 * @param <T> Datatype of the parameters of the function to be invoked.
 	 * @param <R> Datatype of the return of the function to be invoked.
-	 * @param id Identifier of the invokable to be invoked.
-	 * @param args List of parameters of the invokable.
-	 * @return List of results of the invokation of the invokable.
-	 * @throws Exception <p>The exception can be caused because:</p>
-	 * <ul>
-	 *  <li>The id passed as a parameter is null.</li>
-	 *  <li>There is no invokable found with the id passed as a parameter.</li>
-	 * 	<li>There is no invoker with enough max ram to run execute the invokable.</li>
-	 * 	<li>Something goes wrong when executing the invokable.</li>
-	 * </ul>
+	 * @param id Identifier of the action to be invoked.
+	 * @param args List of parameters of the action.
+	 * @return List of results of the action of the invokable.
+	 * @throws Exception The exception can be caused because:
+	 *  The ID passed as a parameter is null.
+	 *  There is no action found with the ID passed as a parameter.
+	 * 	There is no invoker with enough max ram to run execute the action.
+	 * 	Something goes wrong when executing the invokable.
 	 */
 	public <T, R> List<R> invoke(String id, List<T> args) throws Exception
 	{
@@ -287,20 +287,25 @@ public class Controller {
 		invokable = getInvokable(id);
 		if (invokable == null) throw new OperationNotValid("There are no invokables registered with the id" + id);
 		result = new LinkedList<R>();
-		for (T element : args)
+		for (T element : args){
 			result.add(getResult(invokable, id, element));
+		}
 		return (result);
 	}
 
 	/**
-	 * Searches a invokable with the id passed as a parameter and invokes it n times with each arg of list args as a parameters.
+	 * Searches an action with the ID passed as a parameter and invokes it with args as a parameters using asynchronous invokations.
 	 * 
-	 * @param <T>
-	 * @param <R>
-	 * @param id
-	 * @param args
-	 * @return
-	 * @throws Exception
+	 * @param <T> Datatype of the parameters of the function to be invoked.
+	 * @param <R> Datatype of the return of the function to be invoked.
+	 * @param id Identifier of the action to be invoked.
+	 * @param args List of parameters of the action.
+	 * @return List of results of the action of the invokable.
+	 * @throws Exception The exception can be caused because:
+	 *  The ID passed as a parameter is null.
+	 *  There is no action found with the ID passed as a parameter.
+	 * 	There is no invoker with enough max ram to run execute the action.
+	 * 	Something goes wrong when executing the invokable.
 	 */
 	public <T, R> Future<R> invoke_async(String id, T args) throws Exception
 	{
@@ -312,8 +317,20 @@ public class Controller {
 		return (getResult_async(invokable, id, args));
 	}
 
-	//TODO: invoke_async list of args
-	public <T, R> List<Future<R>> invoke_async(String id, List<T> args) throws Exception
+	/**
+	 * Searches an action with the ID passed as a parameter and invokes it for each argument of list args as a parameters using asynchronous invokations.
+	 * 
+	 * @param <T> Datatype of the parameters of the function to be invoked.
+	 * @param <R> Datatype of the return of the function to be invoked.
+	 * @param id Identifier of the action to be invoked.
+	 * @param args List of parameters of the action.
+	 * @return List of results of the action of the invokable.
+	 * @throws Exception The exception can be caused because:
+	 *  The ID passed as a parameter is null.
+	 *  There is no action found with the ID passed as a parameter.
+	 * 	There is no invoker with enough max ram to run execute the action.
+	 * 	Something goes wrong when executing the invokable.
+	 */	public <T, R> List<Future<R>> invoke_async(String id, List<T> args) throws Exception
 	{
 		Invokable		invokable;
 		List<Future<R>>	result;
@@ -327,6 +344,7 @@ public class Controller {
 		return (result);
 	}
 
+	//TODO: Unused?
 	public Object getActionProxy(String id) throws Exception
 	{
 		Action action = hasMapAction(id);
@@ -335,8 +353,7 @@ public class Controller {
 		return (DynamicProxy.instantiate(action.getFunction()));
 	}
 
-	//TODO: javadoc all below this
-
+	//TODO: Unused?
 	/* Used to search if we already have this action in our map */
 	public Action hasMapAction(String id)
 	{
@@ -345,17 +362,28 @@ public class Controller {
 		return (invokables.get(id));
 	}
 
-	public void	listActions()
-	{
-		//TODO: is this all the info I wanna show?
-		if ( invokables.isEmpty())
-			return ;
-		for(String key : invokables.keySet())
-			System.out.println(key);
+	/**
+ 	 * Lists the available actions along with their allocated RAM.
+ 	 */
+	public void listActions() {
+		if (invokables.isEmpty()) {
+			System.out.println("No actions found:");
+			return;
+		}
+		System.out.println("List of Actions and their RAM value:");
+		for (Map.Entry<String, Invokable> entry : invokables.entrySet()) {
+			String key = entry.getKey();
+			Invokable invokable = entry.getValue();
+			long ram = invokable.getRam();
+			System.out.println("Action with ID: " + key + " | Allocated RAM: " + ram + " bytes"); //TODO: is it in bytes?
+		}
 	}
 
-	public void listInvokersRam() throws Exception
-	{
+	/**
+ 	 * Lists the available invokers and their available RAM.
+	 * @throws RemoteException If a remote communication error occurs while accessing an invoker's RAM. //TODO: is this because of RMI?
+ 	 */
+	public void listInvokersRam() throws RemoteException {
 		int i = 1;
 		for (InvokerInterface invoker:invokers) {
 			System.out.println("Invoker "+i+" ram: "+invoker.getAvailableRam());
@@ -363,8 +391,11 @@ public class Controller {
 		}
 	}
 
-	public void shutdownAllInvokers() throws Exception
-	{
+	/**
+	 * Shuts down all registered invokers.
+	 * @throws RemoteException If a remote communication error occurs while shutting down an invoker.
+	 */
+	public void shutdownAllInvokers() throws RemoteException {
 		for (InvokerInterface invoker:invokers) {
 			invoker.shutdownInvoker();
 		}
