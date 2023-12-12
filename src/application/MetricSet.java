@@ -13,6 +13,18 @@ public class MetricSet {
 		dataCollected = new HashMap<String, Map<String, List<Metric<Object>>>>();
 	}
 
+	/**
+	 * Retrieves data associated with a specific metric and function identifier.
+	 *
+	 * This method looks up the provided metric ID in it's data collected, and if found, retrieves the data
+	 * associated with the given  ID. The method concatenates the data from each metric associated with
+	 * the specified function and returns the resulting string.
+	 *
+	 * @param metricId   The ID of the metric for which data is requested.
+	 * @param functionId The ID of the function associated with the requested data.
+	 * @return A string containing the concatenated data from each metric associated with the specified function.
+	 *         An empty string is returned if the ID of the metric is not found or if no data is available.
+	 */
 	public String getData(String metricId, String functionId)
 	{
 		Map<String, List<Metric<Object>>> metricMap;
@@ -32,6 +44,7 @@ public class MetricSet {
 	 * 
 	 * @param metricId Id of the metric to add.
 	 */
+	@SuppressWarnings("unchecked")
 	public <T> void addMetric(String metricId, Metric<T> metric)
 	{
 		Map<String, List<Metric<Object>>> metricMap;

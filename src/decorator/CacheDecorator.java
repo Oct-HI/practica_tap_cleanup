@@ -13,6 +13,12 @@ public class CacheDecorator<T, R> extends Decorator<T, R>{
 		this.id = id;
 	}
 
+	/**
+	 * Applies the cached decorator logic to the given argument.
+	 *
+	 * @param t The argument to be passed to the decorated function.
+	 * @return The result of applying the cached decorator logic to the provided argument.
+	 */
 	@Override
 	public R apply(T t){
 		R		result;

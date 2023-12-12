@@ -11,13 +11,21 @@ public class PairValues {
 		this.result = result;
 	}
 
-	public Object getArgs() 
-	{
+	/**
+	 * Gets the arguments from this instance.
+	 *
+	 * @return The arguments.
+	 */
+	public Object getArgs() {
 		return args;
 	}
 
-	public Object getResult() 
-	{
+	/**
+	 * Gets the results from  this instance.
+	 *
+	 * @return The result.
+	 */
+	public Object getResult() {
 		return result;
 	}
 }

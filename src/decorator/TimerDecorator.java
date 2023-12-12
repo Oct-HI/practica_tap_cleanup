@@ -7,6 +7,12 @@ public class TimerDecorator<T, R> extends Decorator<T, R>{
 		super(function);
 	}
 
+	/**
+	 * Applies the timer decorator logic to the given argument, measuring the execution time of the underlying function.
+	 *
+	 * @param t The argument to be passed to the decorated function.
+	 * @return The result of applying the timer decorator logic to the provided argument.
+	 */
 	@Override
 	public R apply(T t) {
 		long	timeExecution;

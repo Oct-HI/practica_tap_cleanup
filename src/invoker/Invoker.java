@@ -18,9 +18,16 @@ import policy_manager.PolicyManager;
 
 public class Invoker implements InvokerInterface {
 
+	//TODO: Since cache is independant maybe it could be it's own class for OOP purpouses??
+	//TODO: If not out of here, relocate methods 
 	private static Map<String, Map<String, Object>> cacheDecorator = new HashMap<>();
 
-    public static void printCache() {
+    /**
+	 * Prints the contents of the cacheDecorator to the console.
+	 *
+	 * If the cacheDecorator is empty, a message indicating that the cache is empty is printed to the console.
+	 */
+	public static void printCache() {
         if (cacheDecorator.isEmpty()) {
             System.out.println("Cache is empty.");
             return;
@@ -34,6 +41,18 @@ public class Invoker implements InvokerInterface {
         }
     }
 
+	/**
+	 * Caches the result of a function identified by the provided ID, given the arguments and the result.
+	 *
+	 * The method converts the arguments to a string representation and uses it as the key for the cache. If the
+	 * key is not present in the cache for the specified id, the result is added to the cache.
+	 *
+	 * @param id     The identifier of the function.
+	 * @param args   The arguments of the function.
+	 * @param result The result of the function to be cached.
+	 * @param <T>    The type of the arguments.
+	 * @param <R>    The type of the result.
+	 */
     public static <T, R> void cacheResult(String id, T args, R result) {
         String key = args.toString();
         Map<String, Object> innerMap = cacheDecorator.computeIfAbsent(id, k -> new HashMap<>());
@@ -42,6 +61,20 @@ public class Invoker implements InvokerInterface {
         }
     }
 
+	/**
+	 * Retrieves a cached result of a function identified by the provided id, given the arguments.
+	 *
+	 * The method converts the arguments to a string representation and uses it as the key to look up the cached result.
+	 * If the key or id is not present in the cache, an exception is thrown indicating that no matching arguments have been found.
+	 *
+	 * @param id   The identifier of the function.
+	 * @param args The arguments of the function.
+	 * @param <T>  The type of the arguments.
+	 * @param <R>  The type of the result.
+	 * @return The cached result of the function.
+	 * @throws NoResultAvailable If no matching arguments have been found in the cache.
+	 */
+	@SuppressWarnings("unchecked")
     public static <T, R> R getCacheResult(String id, T args) throws NoResultAvailable {
         String key = args.toString();
         Map<String, Object> innerMap = cacheDecorator.get(id);
