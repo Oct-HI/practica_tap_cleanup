@@ -13,6 +13,12 @@ public class InvokerComposite extends Invoker {
 	private List<InvokerInterface>	invokers;
 	private	PolicyManager			policyManager;
 
+	/**
+	 * Creates a new instance of InvokerComposite with the specified RAM capacity.
+	 *
+	 * @param ram The RAM capacity of the invoker composite. Must be greater than zero.
+	 * @return A new instance of Invoker if the RAM capacity is valid, otherwise returns null.
+	 */
 	public static InvokerComposite createInvoker(long ram)
 	{
 		if (ram <= 0)
@@ -41,6 +47,11 @@ public class InvokerComposite extends Invoker {
 		invoker.setPolicyManager(policyManager);
 	}
 
+	/**
+	 * Sets the policy manager for the composite invoker
+	 *
+	 * @param policyManager The policy manager to set. If not null, a copy of the provided policy manager is used.
+	 */
 	public void	setPolicyManager(PolicyManager policyManager)
 	{
 		if (policyManager != null)
@@ -60,7 +71,7 @@ public class InvokerComposite extends Invoker {
 		invokers.remove(invoker);
 	}
 
-	//TODO: redo this javadoc
+	//TODO: esto esta ya cambiado en la vversion final
 	/**
 	 * Method used to select a invoker to execute a function based on the ram it consumes and the policy we have assigned.
 	 * @param ram
@@ -72,9 +83,6 @@ public class InvokerComposite extends Invoker {
 	 *  <li>Exeption: something goes wrong with RMI.</li>
 	 * </ul>
 	 */
-	//TODO: preguntar a Ussama
-	// va demasiado rapido y no se asignan correctamente los invokers porque cuando accede a la ramAvailable esta aun no ha
-	//sido actualizada
 	@Override
 	public InvokerInterface selectInvoker(long ram) throws Exception
 	{
