@@ -13,11 +13,6 @@ public class InvokerComposite extends Invoker {
 	private List<InvokerInterface>	invokers;
 	private	PolicyManager			policyManager;
 
-	private void maldad()
-	{
-		System.out.print("sin este print no funciona");
-	}
-
 	public static InvokerComposite createInvoker(long ram)
 	{
 		if (ram <= 0)

@@ -15,7 +15,6 @@ public abstract class Decorator<T, R> implements Function<T, R> {
 	 *
 	 * @param t The argument to be passed to the decorated function.
 	 * @return The result of applying the decorated function to the provided argument.
-	 *
 	 */
 	@Override
 	public R apply(T t) {

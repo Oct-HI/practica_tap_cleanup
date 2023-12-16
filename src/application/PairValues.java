@@ -21,7 +21,7 @@ public class PairValues {
 	}
 
 	/**
-	 * Gets the results from  this instance.
+	 * Gets the results from this instance.
 	 *
 	 * @return The result.
 	 */
