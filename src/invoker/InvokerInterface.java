@@ -16,7 +16,7 @@ public interface InvokerInterface extends Remote {
 	 * 
 	 * @return Ram being used.
 	 */
-	public long	getRamUsed() throws RemoteException;
+	public long	getUsedRam() throws RemoteException;
 
 	/**
 	 * Getter of the ram avaiable to use.
@@ -25,6 +25,7 @@ public interface InvokerInterface extends Remote {
 	 */
 	public long	getAvailableRam() throws RemoteException;
 	
+	public void reserveRam(long ram) throws Exception;
 	/**
 	 * Getter of the max ram of the Invoker.
 	 * 
@@ -58,10 +59,17 @@ public interface InvokerInterface extends Remote {
 	 */
 	public InvokerInterface selectInvoker(long ram) throws Exception;
 
-	public void	setPolicyManager(PolicyManager policyManager);
+	//TODO; javadoc this
+	public void	setPolicyManager(PolicyManager policyManager) throws Exception;
 
 	/**
 	 * This shuts down the executor of the Invoker. Must be called when the application finishes.
 	 */
 	public void shutdownInvoker() throws RemoteException;
+
+
+	//not sure
+	public void registerInvoker(InvokerInterface invoker) throws Exception;
+
+	public void deleteInvoker(InvokerInterface invoker) throws Exception;
 }

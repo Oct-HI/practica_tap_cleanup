@@ -8,26 +8,20 @@ import faas_exceptions.NoPolicyManagerRegistered;
 import faas_exceptions.OperationNotValid;
 import policy_manager.PolicyManager;
 
-public class InvokerComposite extends Invoker {
+public class CompositeInvoker extends Invoker {
 
 	private List<InvokerInterface>	invokers;
 	private	PolicyManager			policyManager;
 
-	/**
-	 * Creates a new instance of InvokerComposite with the specified RAM capacity.
-	 *
-	 * @param ram The RAM capacity of the invoker composite. Must be greater than zero.
-	 * @return A new instance of Invoker if the RAM capacity is valid, otherwise returns null.
-	 */
-	public static InvokerComposite createInvoker(long ram)
+	public static CompositeInvoker createInvoker(long ram)
 	{
 		if (ram <= 0)
 			return (null);
 		else
-			return (new InvokerComposite(ram));
+			return (new CompositeInvoker(ram));
 	}
 
-	private InvokerComposite(long ram) 
+	private CompositeInvoker(long ram) 
 	{
 		super(ram);
 		invokers = new LinkedList<InvokerInterface>();
@@ -39,7 +33,7 @@ public class InvokerComposite extends Invoker {
 	 * @param invoker The InvokerInterface to be registered.
 	 * @throws OperationNotValid If the invoker passed as a parameter is null or is already inside the list.
 	 */
-	public void registerInvoker(InvokerInterface invoker) throws OperationNotValid
+	public void registerInvoker(InvokerInterface invoker) throws Exception
 	{
 		if (invoker == null) throw new OperationNotValid("Invoker to register cannot be null.");
 		if (invokers.contains(invoker)) throw new OperationNotValid("Invoker is already registered.");
@@ -47,11 +41,6 @@ public class InvokerComposite extends Invoker {
 		invoker.setPolicyManager(policyManager);
 	}
 
-	/**
-	 * Sets the policy manager for the composite invoker
-	 *
-	 * @param policyManager The policy manager to set. If not null, a copy of the provided policy manager is used.
-	 */
 	public void	setPolicyManager(PolicyManager policyManager)
 	{
 		if (policyManager != null)
@@ -64,14 +53,14 @@ public class InvokerComposite extends Invoker {
 	 * @param invoker The InvokerInterface to be removed.
 	 * @throws OperationNotValid If the invoker passed as a parameter is null or is not inside the list.
 	 */
-	public void deleteInvoker(InvokerInterface invoker) throws OperationNotValid
+	public void deleteInvoker(InvokerInterface invoker) throws Exception
 	{
 		if (invoker == null) throw new OperationNotValid("Invoker to delete cannot be null.");
 		if (!invokers.contains(invoker)) throw new OperationNotValid("Invoker is not registered.");
 		invokers.remove(invoker);
 	}
 
-	//TODO: esto esta ya cambiado en la vversion final
+	//TODO: redo this javadoc
 	/**
 	 * Method used to select a invoker to execute a function based on the ram it consumes and the policy we have assigned.
 	 * @param ram
@@ -83,6 +72,9 @@ public class InvokerComposite extends Invoker {
 	 *  <li>Exeption: something goes wrong with RMI.</li>
 	 * </ul>
 	 */
+	//TODO: preguntar a Ussama
+	// va demasiado rapido y no se asignan correctamente los invokers porque cuando accede a la ramAvailable esta aun no ha
+	//sido actualizada
 	@Override
 	public InvokerInterface selectInvoker(long ram) throws Exception
 	{
@@ -94,22 +86,16 @@ public class InvokerComposite extends Invoker {
 		}
 		catch (NoInvokerAvailable e) {
 			//if no invokers from the list have enough max ram we check if this composite has enough
-			if (getMaxRam() < ram) throw new NoInvokerAvailable("");
+			if (this.getMaxRam() < ram) throw new NoInvokerAvailable("");
 			return (this);
 		}
-		System.out.println("invoker selected: " + invoker.getId() + invoker.getAvailableRam());
 		//if all invokers are full this will return
 		if (invoker.getAvailableRam() - ram >= 0)
-		{
-			System.out.println("invoker used: " +invoker.getId() + invoker.getAvailableRam());
 			return (invoker);
-		}
 		//we have a full invoker, so we watch if the composite can be returned
 		if (this.getMaxRam() >= ram)
-		{
 			//System.out.println("invoker used: " +this.getId() + this.getAvailableRam());
 			return (this);
-		}
 		//System.out.println("invoker used: " +invoker.getId() + invoker.getAvailableRam());
 		// if we are here, it means our invoker cannot execute the invokable but a child invoker can
 		// in this case, we return the child
