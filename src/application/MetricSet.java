@@ -8,12 +8,45 @@ public class MetricSet {
 
 	private Map<String, Map<String, List<Metric<Object>>>> dataCollected;
 
+<<<<<<< Updated upstream
 	public MetricSet()
 	{
+=======
+	private static volatile MetricSet uniqueInstance = null;
+	private static Object mutex = new Object();
+
+	/**
+	 * Checks if the MetricSet is instanciated, creates one if it isn't.
+	 * This method is thread-safe.
+	 * 
+	 * @return The Singleton instance of MetricSet. 
+	 */
+	public static MetricSet instantiate() {
+		MetricSet instance;
+
+		instance = uniqueInstance;
+		if (uniqueInstance == null)
+		{
+			synchronized (mutex)
+			{
+				instance = uniqueInstance;
+				if (instance == null)
+					instance = uniqueInstance = new MetricSet();
+			}
+		}
+		return (instance);
+	}
+
+	/**
+	 * Constructs a new instance of MetricSet and instantiates all the structs it uses.
+	 */
+	private MetricSet() {
+>>>>>>> Stashed changes
 		dataCollected = new HashMap<String, Map<String, List<Metric<Object>>>>();
 	}
 
 	/**
+<<<<<<< Updated upstream
 	 * Retrieves data associated with a specific metric and function identifier.
 	 *
 	 * This method looks up the provided metric ID in it's data collected, and if found, retrieves the data
@@ -24,6 +57,13 @@ public class MetricSet {
 	 * @param functionId The ID of the function associated with the requested data.
 	 * @return A string containing the concatenated data from each metric associated with the specified function.
 	 *         An empty string is returned if the ID of the metric is not found or if no data is available.
+=======
+	 * Retrieves the data associated with a specific metric and function from the collected data.
+	 *
+	 * @param metricId   The identifier of the metric.
+	 * @param functionId The identifier of the function.
+	 * @return The concatenated string representation of the data associated with the metric and function.
+>>>>>>> Stashed changes
 	 */
 	public String getData(String metricId, String functionId)
 	{

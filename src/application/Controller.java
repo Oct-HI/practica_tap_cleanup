@@ -198,7 +198,28 @@ public class Controller {
 	//TODO: Generic throws is ugly maybe fix later? Applies for most below.
 
 	/**
+<<<<<<< Updated upstream
 	 * Method used by  actions to get an invoker to execute code and then execute it.
+=======
+	 * Method used to select a invoker to execute a function based on the ram it consumes and the policy we have assigned.
+	 * @param ram
+	 * @return
+	 * @throws Exception The exception can be caused because:
+	 * <ul>
+	 * 	<li>NoPolicyManagerRegistered: There is no policyManager registered.</li>
+	 * 	<li>NoInvokerAvailable: There is no invoker with enough max ram to execute the invokable.</li>
+	 *  <li>Exeption: something goes wrong with RMI.</li>
+	 * </ul>
+	 */
+	private InvokerInterface selectInvoker(long ram) throws Exception //TODO: FIX HIERARCHY OF EXCEPTIONS
+	{
+		if (policyManager == null) throw new NoPolicyManagerRegistered("There isn't a policy manager registered.");
+		return (policyManager.getInvoker(invokers, ram));
+	}
+
+	/**
+	 * Method used by invokations to get an invoker to execute code and then execute it.
+>>>>>>> Stashed changes
 	 * 
 	 * @param <T> Datatype of the parameters of the function to be invoked.
 	 * @param <R> Datatype of the return of the function to be invoked.
@@ -218,6 +239,24 @@ public class Controller {
 		return (invoker.invoke(invokable, args, id));
 	}
 
+<<<<<<< Updated upstream
+=======
+	/**
+	 * Asynchronously obtains an invoker to execute a given invokable function and then executes it.
+	 *
+	 * @param <T>       Datatype of the parameters of the function to be invoked.
+	 * @param <R>       Datatype of the return of the function to be invoked.
+	 * @param invokable Function to be invoked.
+	 * @param id        Identifier of the invokable to be invoked.
+	 * @param args      Parameters of the invokable.
+	 * @return A Future representing the result of the asynchronous invocation of the invokable.
+	 * @throws Exception The exception can be caused because:
+	 * <ul>
+	 *     <li>There is no invoker with enough max RAM to execute the invokable.</li>
+	 *     <li>Something goes wrong when executing the invokable.</li>
+	 * </ul>
+	 */
+>>>>>>> Stashed changes
 	private <T, R> Future<R> getResult_async(Invokable invokable, String id, T args) throws Exception
 	{
 		InvokerInterface	invoker;
@@ -327,11 +366,43 @@ public class Controller {
 	 * @param args List of parameters of the action.
 	 * @return List of results of the action of the invokable.
 	 * @throws Exception The exception can be caused because:
+<<<<<<< Updated upstream
 	 *  The ID passed as a parameter is null.
 	 *  There is no action found with the ID passed as a parameter.
 	 * 	There is no invoker with enough max ram to run execute the action.
 	 * 	Something goes wrong when executing the invokable.
 	 */	
+=======
+	 * <ul>
+	 *  <li>The id passed as a parameter is null.</li>
+	 *  <li>There is no action found with the id passed as a parameter.</li>
+	 * 	<li>There is no invoker with enough max ram to run execute the action.</li>
+	 * 	<li>Something goes wrong when executing the action.</li>
+	 * </ul>
+	 */
+	public <T, R> Future<R> invoke_async(String id, T args) throws Exception
+	{
+		return (getResult_async(getInvokable(id), id, args));
+	}
+
+	/**
+	 * Invokes an action with the specified ID asynchronously, providing a list of arguments for each invocation.
+	 *
+	 * @param <T>  Datatype of the parameters of the function to be invoked.
+	 * @param <R>  Datatype of the return of the function to be invoked.
+	 * @param id   Identifier of the action to be invoked.
+	 * @param args List of parameters for each asynchronous invocation.
+	 * @return List of Future results of the invocations of the action.
+	 * @throws Exception The exception can be caused because:
+	 * <ul>
+	 *   <li>The id passed as a parameter is null.</li>
+	 *   <li>There is no action found with the id passed as a parameter.</li>
+	 *   <li>There is no invoker with enough max ram to run execute the action.</li>
+	 *   <li>Something goes wrong when executing one or more actions.</li>
+	 * </ul>
+	 * //TODO: Specify more details about the potential exceptions.
+	 */
+>>>>>>> Stashed changes
 	public <T, R> List<Future<R>> invoke_async(String id, List<T> args) throws Exception
 	{
 		Invokable		invokable;
@@ -346,7 +417,22 @@ public class Controller {
 		return (result);
 	}
 
+<<<<<<< Updated upstream
 	//TODO: Unused?
+=======
+	/**
+	 * Retrieves a proxy object for an action with the specified ID.
+	 *
+	 * @param id Identifier of the action.
+	 * @return Proxy object for the action.
+	 * @throws Exception The exception can be caused because:
+	 * <ul>
+	 *   <li>The id passed as a parameter is null.</li>
+	 *   <li>There is no action found with the id passed as a parameter.</li>
+	 * </ul>
+	 * //TODO: Specify more details about the potential exceptions.
+	 */
+>>>>>>> Stashed changes
 	public Object getActionProxy(String id) throws Exception
 	{
 		Action action = hasMapAction(id);
