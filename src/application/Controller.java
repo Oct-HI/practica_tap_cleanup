@@ -1,10 +1,12 @@
 package application;
+import java.lang.reflect.Method;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
+import java.util.function.Function;
 
 import dynamic_proxy.DynamicProxy;
 import faas_exceptions.NoActionRegistered;
@@ -186,7 +188,7 @@ public class Controller {
 	 * @return The invokable or null if none was found.
 	 * @throws NoActionRegistered //TODO this
 	 */
-	private Invokable getInvokable(String id) throws OperationNotValid, NoActionRegistered
+	public  Invokable getInvokable(String id) throws OperationNotValid, NoActionRegistered
 	{
 		if (id == null) throw new OperationNotValid("Id cannot be null.");
 		if (invokables.isEmpty()) throw new NoActionRegistered("Map of actions is empty.");
@@ -344,22 +346,6 @@ public class Controller {
 		return (result);
 	}
 
-	/**
-	 * Retrieves a proxy object for an action with the specified ID.
-	 *
-	 * @param id Identifier of the action.
-	 * @return Proxy object for the action.
-	 * @throws Exception The exception can be caused because:
-	 * <ul>
-	 *   <li>The id passed as a parameter is null.</li>
-	 *   <li>There is no action found with the id passed as a parameter.</li>
-	 * </ul>
-	 * //TODO: Specify more details about the potential exceptions.
-	 */
-	public Object getActionProxy(String id) throws Exception
-	{
-		return (DynamicProxy.instantiate(getInvokable(id).getInvokable()));
-	}
 
 	/**
  	 * Lists the available actions along with their allocated RAM.
